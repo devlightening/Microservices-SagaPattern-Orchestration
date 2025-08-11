@@ -25,42 +25,40 @@ This diagram illustrates the state transitions and message flow orchestrated by 
 
 ```mermaid
 flowchart TD
-    subgraph Services
-        OrderAPI
-        StockAPI
-        PaymentAPI
-    end
-
-    subgraph SagaStateMachineService
-        OrderCreated
-        StockReserved
-        StockNotReserved
-        PaymentCompleted
-        PaymentFailed
-        StockRolledBack
-    end
-
+ subgraph Services["Services"]
+        OrderAPI["OrderAPI"]
+        StockAPI["StockAPI"]
+        PaymentAPI["PaymentAPI"]
+  end
+ subgraph SagaStateMachineService["SagaStateMachineService"]
+        OrderCreated["OrderCreated"]
+        StockReserved["StockReserved"]
+        StockNotReserved["StockNotReserved"]
+        PaymentCompleted["PaymentCompleted"]
+        PaymentFailed["PaymentFailed"]
+        StockRolledBack["StockRolledBack"]
+  end
     OrderAPI -- OrderStartedEvent --> OrderCreated
-    OrderCreated -- OrderCreatedEvent --> StockAPI
+    OrderCreated -- OrderCreatedEvent --> StockAPI & StockAPI
     StockAPI -- StockReservedEvent --> StockReserved
     StockAPI -- StockNotReservedEvent --> StockNotReserved
-    StockReserved -- PaymentStartedEvent --> PaymentAPI
+    StockReserved -- PaymentStartedEvent --> PaymentAPI & PaymentAPI
     PaymentAPI -- PaymentCompletedEvent --> PaymentCompleted
     PaymentAPI -- PaymentFailedEvent --> PaymentFailed
+    StockNotReserved --> OrderAPI
+    OrderAPI -- OrderFailedEvent --> OrderAPI & OrderAPI
+    PaymentFailed --> StockAPI & OrderAPI
+    StockAPI -- StockRollbackMessage --> StockAPI
 
-    StockNotReserved --> OrderAPI -- OrderFailedEvent --> OrderAPI
-    PaymentFailed --> StockAPI -- StockRollbackMessage --> StockAPI
-    PaymentFailed --> OrderAPI -- OrderFailedEvent --> OrderAPI
+    style OrderCreated fill:#ccffcc,stroke:#333,stroke-width:2px
+    style StockReserved fill:#ccffcc,stroke:#333,stroke-width:2px
+    style StockNotReserved fill:#ffcccc,stroke:#333,stroke-width:2px
+    style PaymentCompleted fill:#ccffcc,stroke:#333,stroke-width:2px
+    style PaymentFailed fill:#ffcccc,stroke:#333,stroke-width:2px,color:#000000
+    style StockRolledBack fill:#ffcccc,stroke:#333,stroke-width:2px
 
-    OrderCreated -- OrderCreatedEvent --> StockAPI
-    StockReserved -- PaymentStartedEvent --> PaymentAPI
 
-    style OrderCreated fill:#ccffcc,stroke:#333,stroke-width:2px;
-    style StockReserved fill:#ccffcc,stroke:#333,stroke-width:2px;
-    style PaymentCompleted fill:#ccffcc,stroke:#333,stroke-width:2px;
-    style StockNotReserved fill:#ffcccc,stroke:#333,stroke-width:2px;
-    style PaymentFailed fill:#ffcccc,stroke:#333,stroke-width:2px;
-    style StockRolledBack fill:#ffcccc,stroke:#333,stroke-width:2px;
+
 
 ```
 
