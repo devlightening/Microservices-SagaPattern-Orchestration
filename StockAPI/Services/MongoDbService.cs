@@ -2,18 +2,14 @@
 
 namespace StockAPI.Services
 {
-    public class MongoDbService 
+    public class MongoDbService
     {
-
         readonly IMongoDatabase _database;
         public MongoDbService(IConfiguration configuration)
         {
             MongoClient client = new(configuration.GetConnectionString("MongoDB"));
-            _database = client.GetDatabase("SagaStockAPI");
+            _database = client.GetDatabase("StockDB");
         }
-
-        public IMongoCollection<T> GetCollection<T>() =>
-            _database.GetCollection<T>(typeof(T).Name.ToLowerInvariant());
-
+        public IMongoCollection<T> GetCollection<T>() => _database.GetCollection<T>(typeof(T).Name.ToLowerInvariant());
     }
 }

@@ -1,31 +1,29 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using OrderAPI.Consumer;
 using OrderAPI.Models.Context;
-using OrderAPI.Models.Entites;
-using OrderAPI.Models.Enums;
 using OrderAPI.ViewModels;
 using Shared.Events.OrderEvents;
-using Shared.Messages;
 using Shared.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Swagger ve OpenAPI desteðini ekler
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
 builder.Services.AddMassTransit(configurator =>
 {
-    //configurator.AddConsumer<PaymentCompletedEventConsumer>();
-    //configurator.AddConsumer<PaymentFailedEventConsumer>();
-    //configurator.AddConsumer<StockNotReservedEventConsume>();
+    configurator.AddConsumer<OrderCompletedEventConsumer>();
+    configurator.AddConsumer<OrderFailedEventConsumer>();
+
     configurator.UsingRabbitMq((context, _configure) =>
     {
-        //_configure.ReceiveEndpoint(RabbitMQSettings.Order_PaymentFailedEventQueue, e => e.ConfigureConsumer<PaymentFailedEventConsumer>(context));
-        //_configure.ReceiveEndpoint(RabbitMQSettings.Order_PaymentCompletedEventQueue, e => e.ConfigureConsumer<PaymentCompletedEventConsumer>(context));
-        //_configure.ReceiveEndpoint(RabbitMQSettings.Order_StockNotReservedEventQueue, e => e.ConfigureConsumer<StockNotReservedEventConsume>(context));
         _configure.Host(builder.Configuration["RabbitMQ"]);
+
+        _configure.ReceiveEndpoint(RabbitMQSettings.Order_OrderCompletedEventQueue, e => e.ConfigureConsumer<OrderCompletedEventConsumer>(context));
+
+        _configure.ReceiveEndpoint(RabbitMQSettings.Order_OrderFailedEventQueue, e => e.ConfigureConsumer<OrderFailedEventConsumer>(context));
     });
 });
 
@@ -33,28 +31,22 @@ builder.Services.AddDbContext<OrderAPIDbContext>(options => options.UseSqlServer
 
 var app = builder.Build();
 
-// Geliþtirme ortamýnda Swagger'ý etkinleþtirir
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-// ----------------------------------------------------
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.MapPost("/create-order", async (CreateOrderViewModel model, OrderAPIDbContext context, ISendEndpointProvider sendEndpointProvider) =>
 {
-    Order order = new()
+    OrderAPI.Models.Entites.Order order = new()
     {
         BuyerId = model.BuyerId,
         CreatedDate = DateTime.UtcNow,
-        OrderStatu = OrderStatusType.Suspend,
-        TotalPrice = model.OrderItems.Sum(item => item.Price * item.Count),
-        OrderItems = model.OrderItems.Select(item => new OrderItem
+        OrderStatu = OrderAPI.Models.Enums.OrderStatusType.Suspend,
+        TotalPrice = model.OrderItems.Sum(oi => oi.Count * oi.Price),
+        OrderItems = model.OrderItems.Select(oi => new OrderAPI.Models.Entites.OrderItem
         {
-            ProductId = item.ProductId,
-            Count = item.Count,
-            Price = item.Price
+            Price = oi.Price,
+            Count = oi.Count,
+            ProductId = oi.ProductId,
         }).ToList(),
     };
 
@@ -63,22 +55,20 @@ app.MapPost("/create-order", async (CreateOrderViewModel model, OrderAPIDbContex
 
     OrderStartedEvent orderStartedEvent = new()
     {
+        BuyerId = model.BuyerId,
         OrderId = order.OrderId,
-        BuyerId = order.BuyerId,
-        TotalPrice = model.OrderItems.Sum(item => item.Price * item.Count),
-        OrderItems = order.OrderItems.Select(item => new OrderItemMessage
+        TotalPrice = model.OrderItems.Sum(oi => oi.Count * oi.Price),
+        OrderItems = model.OrderItems.Select(oi => new Shared.Messages.OrderItemMessage
         {
-            ProductId = item.ProductId,
-            Count = item.Count,
-            Price = item.Price
-        }).ToList(),
+            Price = oi.Price,
+            Count = oi.Count,
+            ProductId = oi.ProductId
+        }).ToList()
     };
-    var sendEndPoint = await sendEndpointProvider.GetSendEndpoint
-                    (new Uri($"queue:{RabbitMQSettings.StateMachineQueue}"));
 
-    await sendEndPoint.Send<OrderStartedEvent>(orderStartedEvent);
+    var sendEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{RabbitMQSettings.StateMachineQueue}"));
+    await sendEndpoint.Send<OrderStartedEvent>(orderStartedEvent);
 
 });
-
 
 app.Run();
