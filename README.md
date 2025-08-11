@@ -53,6 +53,7 @@ stateDiagram-v2
     classDef fail fill:#ffcccc,stroke:#333,stroke-width:2px;
     class OrderCreated,StockReserved,PaymentCompleted success;
     class StockNotReserved,PaymentFailed fail;
+
 ```
 
 **Description of the Flow:**
