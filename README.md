@@ -24,7 +24,7 @@ The system consists of multiple **loosely coupled microservices** communicating 
 This diagram illustrates the state transitions and message flow orchestrated by the `SagaStateMachineService`.
 
 ```mermaid
-graph TD
+flowchart TD
     subgraph Services
         OrderAPI
         StockAPI
@@ -32,12 +32,12 @@ graph TD
     end
 
     subgraph SagaStateMachineService
-        state OrderCreated
-        state StockReserved
-        state StockNotReserved
-        state PaymentCompleted
-        state PaymentFailed
-        state StockRolledBack
+        OrderCreated
+        StockReserved
+        StockNotReserved
+        PaymentCompleted
+        PaymentFailed
+        StockRolledBack
     end
 
     OrderAPI -- OrderStartedEvent --> OrderCreated
@@ -61,6 +61,7 @@ graph TD
     style StockNotReserved fill:#ffcccc,stroke:#333,stroke-width:2px;
     style PaymentFailed fill:#ffcccc,stroke:#333,stroke-width:2px;
     style StockRolledBack fill:#ffcccc,stroke:#333,stroke-width:2px;
+
 ```
 
 -----
