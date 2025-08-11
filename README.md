@@ -50,16 +50,12 @@ flowchart TD
     PaymentFailed --> StockAPI & OrderAPI
     StockAPI -- StockRollbackMessage --> StockAPI
 
-    style OrderCreated fill:#ccffcc,stroke:#333,stroke-width:2px
-    style StockReserved fill:#ccffcc,stroke:#333,stroke-width:2px
-    style StockNotReserved fill:#ffcccc,stroke:#333,stroke-width:2px
-    style PaymentCompleted fill:#ccffcc,stroke:#333,stroke-width:2px
+    style OrderCreated fill:#ccffcc,stroke:#333,stroke-width:2px,color:#000000
+    style StockReserved fill:#ccffcc,stroke:#333,stroke-width:2px,color:#000000
+    style StockNotReserved fill:#ffcccc,stroke:#333,stroke-width:2px,color:#000000
+    style PaymentCompleted fill:#ccffcc,stroke:#333,stroke-width:2px,color:#000000
     style PaymentFailed fill:#ffcccc,stroke:#333,stroke-width:2px,color:#000000
-    style StockRolledBack fill:#ffcccc,stroke:#333,stroke-width:2px
-
-
-
-
+    style StockRolledBack fill:#ffcccc,stroke:#333,stroke-width:2px,color:#000000
 ```
 
 -----
